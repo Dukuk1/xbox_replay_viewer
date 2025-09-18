@@ -4,26 +4,98 @@ import fs from 'fs';
 import path from 'path';
 
 
-const gamertag = 'YOUR_GAMER_TAG'
-const downloadDir = './downloaded_images';
+
+
+
+
+var gamertag = 'Your_Gamertag'
+
+const downloadDirimg = './downloaded_images';
+const downloadDirclip = './downloaded_clips';
+
 const createDownloadDir = () => {
-  if (!fs.existsSync(downloadDir)) {
-    fs.mkdirSync(downloadDir);
-    console.log(`Created directory: ${downloadDir}`);
+  if (!fs.existsSync(downloadDirimg)) {
+    fs.mkdirSync(downloadDirimg);
+    console.log(`Created directory: ${downloadDirimg}`);
+  }
+   if (!fs.existsSync(downloadDirclip)) {
+    fs.mkdirSync(downloadDirclip);
+    console.log(`Created directory: ${downloadDirclip}`);
   }
 };
 
 
-const result = authenticate('YOUR_XBOX_EMAIL', 'YOUR_XBOX_PASSWORD').then(console.info).catch(console.error);
+var auth = await authenticate('YOUR_EMAIL', 'YOUR_PASSWORD');
 
-console.log(result);
+
+console.log(auth.user_hash)
 
 XboxLiveAPI.getPlayerSettings(gamertag, {
-    userHash: result['user_hash'],
-    XSTSToken: result['xsts_token']
+    userHash: auth.user_hash,
+    XSTSToken: auth.xsts_token
 }, ['UniqueModernGamertag', 'GameDisplayPicRaw', 'Gamerscore', 'Location'])
     .then(console.info)
     .catch(console.error);
+
+
+
+
+const downloadClips = async () => {
+  createDownloadDir();
+
+
+
+  const PlayerClips = await XboxLiveAPI.getPlayerGameClips(
+     gamertag,
+    {
+      userHash: auth.user_hash,
+    XSTSToken: auth.xsts_token
+    },
+);
+
+
+
+
+
+
+for (const [ClipIndex, clip] of PlayerClips.gameClips.entries()) {
+    const clipUris = clip.gameClipUris;
+
+    if (!clipUris || clipUris.length === 0) {
+      console.log(`Clip at index ${ClipIndex} has no URIs. Skipping.`);
+      continue;
+    }
+
+    
+    for (const [videoIndex, uriObject] of clipUris.entries()) {
+     
+      const uri = uriObject.uri;
+
+          const filename = `Clip_${ClipIndex + 1}_video_${videoIndex + 1}.mp4`;
+      const filepath = path.join(downloadDirclip, filename);
+
+      console.log(`Downloading ${uri} to ${filepath}...`);
+
+      try {
+      
+        const response = await fetch(uri);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch: ${response.statusText}`);
+        }
+
+       
+        const videoArrayBuffer = await response.arrayBuffer();
+        const videoBuffer = Buffer.from(videoArrayBuffer);
+        
+        await fs.promises.writeFile(filepath, videoBuffer);
+        console.log(`Successfully downloaded ${filename}`);
+
+      } catch (error) {
+        console.error(`Error downloading clip: ${error.message}`);
+      }
+    }
+  }
+}
     
 
 const downloadImages = async () => {
@@ -31,15 +103,17 @@ const downloadImages = async () => {
 
 
 
-const result = await XboxLiveAPI.getPlayerScreenshots(
+const PlayerScreenshots = await XboxLiveAPI.getPlayerScreenshots(
      gamertag,
     {
-        userHash: result['user_hash'],
-        XSTSToken: result['xsts_token']
+      userHash: auth.user_hash,
+    XSTSToken: auth.xsts_token
     },
 );
 
-for (const [screenshotIndex, screenshot] of result.screenshots.entries()) {
+
+
+for (const [screenshotIndex, screenshot] of PlayerScreenshots.screenshots.entries()) {
     const screenshotUris = screenshot.screenshotUris;
 
     if (!screenshotUris || screenshotUris.length === 0) {
@@ -54,7 +128,7 @@ for (const [screenshotIndex, screenshot] of result.screenshots.entries()) {
 
       // Generate a unique filename based on the screenshot and image index
           const filename = `screenshot_${screenshotIndex + 1}_image_${imageIndex + 1}.png`;
-      const filepath = path.join(downloadDir, filename);
+      const filepath = path.join(downloadDirimg, filename);
 
       console.log(`Downloading ${uri} to ${filepath}...`);
 
@@ -84,5 +158,6 @@ for (const [screenshotIndex, screenshot] of result.screenshots.entries()) {
 
 // Run the function
 downloadImages();
+downloadClips();
 
 

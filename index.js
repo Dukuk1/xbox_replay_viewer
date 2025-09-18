@@ -14,13 +14,13 @@ const createDownloadDir = () => {
 };
 
 
-const result = authenticate('YOUR_XBOX_EMAIL', 'YOUR_XBOX_PASSWORD').then(console.info).catch(console.error);
+const auth = await authenticate('YOUR_XBOX_EMAIL', 'YOUR_XBOX_PASSWORD');
 
 console.log(result);
 
 XboxLiveAPI.getPlayerSettings(gamertag, {
-    userHash: result['user_hash'],
-    XSTSToken: result['xsts_token']
+    userHash: auth.user_hash,
+    XSTSToken: auth.xsts_token,
 }, ['UniqueModernGamertag', 'GameDisplayPicRaw', 'Gamerscore', 'Location'])
     .then(console.info)
     .catch(console.error);
@@ -34,8 +34,8 @@ const downloadImages = async () => {
 const result = await XboxLiveAPI.getPlayerScreenshots(
      gamertag,
     {
-        userHash: result['user_hash'],
-        XSTSToken: result['xsts_token']
+        userHash: auth.user_hash,
+    XSTSToken: auth.xsts_token,
     },
 );
 

@@ -1,0 +1,16 @@
+{
+  "name": "xbox_replay_viewer",
+  "version": "1.0.0",
+  "description": "",
+  "license": "MIT",
+  "author": "Mhmd Ahmd",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@xboxreplay/xboxlive-api": "^3.4.3",
+    "@xboxreplay/xboxlive-auth": "^5.1.0"
+  }
+}

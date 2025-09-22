@@ -2,11 +2,84 @@ import { authenticate } from '@xboxreplay/xboxlive-auth';
 import XboxLiveAPI from '@xboxreplay/xboxlive-api';
 import fs from 'fs';
 import path from 'path';
+import express from 'express';
+import bodyParser from 'body-parser';
+import session from 'express-session';
+
+const app = express()
+const port = 5000
+
+app.set('view engine', 'ejs');
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(session({
+  secret: 'XxSniperPro360xX', // A secret key to sign the session ID cookie
+  resave: false,
+  saveUninitialized: true
+}));
 
 
+app.get('/', (req, res) => {
+
+  const user = req.session.user;
+
+  if (user) {
+    res.redirect('/dashboard')
+  } else {
+
+    res.redirect("/login")
+  }
+})
+
+app.get("/login", (req, res) => {
+  res.render("form");
+})
+
+app.post("/login",async (req,res) => {
+    var email=req.body.email;
+    var password=req.body.password;
+    var gamertag=req.body.gamertag;
+
+     const user = { gamertag: gamertag, email:email, password:password };
+  // Store the entire user object in the session
+  req.session.user = user;
+
+    var auth = await authenticate(email,password);
+      
+  req.session.auth = auth;
+  
+  console.log(auth.user_hash)
+
+  const playSettings = await XboxLiveAPI.getPlayerSettings(gamertag, {
+      userHash: auth.user_hash,
+      XSTSToken: auth.xsts_token
+  }, ['UniqueModernGamertag', 'GameDisplayPicRaw', 'Gamerscore', 'Location']);
+  req.session.playSettings = playSettings;
+      
+  res.redirect('/dashboard');
+  
+    
+});
+
+app.get("/dashboard", (req, res) => {
+ 
+  const user = req.session.user;
+
+  if (user) {
+    // Render the EJS file with the data from the session
+  const auth = req.session.auth;;
+
+    res.render('dashboard', { user: user, auth: auth, playSettings: req.session.playSettings });
+  } else {
+    // Handle case where user isn't in session (e.g., redirect to login)
+    res.redirect('/login');
+  }
 
 
+});
 
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`)
+})
 
 var gamertag = 'Your_Gamertag'
 
@@ -25,17 +98,17 @@ const createDownloadDir = () => {
 };
 
 
-var auth = await authenticate('YOUR_EMAIL', 'YOUR_PASSWORD');
+// var auth = await authenticate('YOUR_EMAIL', 'YOUR_PASSWORD');
 
 
-console.log(auth.user_hash)
+// console.log(auth.user_hash)
 
-XboxLiveAPI.getPlayerSettings(gamertag, {
-    userHash: auth.user_hash,
-    XSTSToken: auth.xsts_token
-}, ['UniqueModernGamertag', 'GameDisplayPicRaw', 'Gamerscore', 'Location'])
-    .then(console.info)
-    .catch(console.error);
+// XboxLiveAPI.getPlayerSettings(gamertag, {
+//     userHash: auth.user_hash,
+//     XSTSToken: auth.xsts_token
+// }, ['UniqueModernGamertag', 'GameDisplayPicRaw', 'Gamerscore', 'Location'])
+//     .then(console.info)
+//     .catch(console.error);
 
 
 
@@ -157,7 +230,7 @@ for (const [screenshotIndex, screenshot] of PlayerScreenshots.screenshots.entrie
 };
 
 // Run the function
-downloadImages();
-downloadClips();
+// downloadImages();
+// downloadClips();
 
 

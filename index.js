@@ -1,7 +1,5 @@
 import { authenticate } from '@xboxreplay/xboxlive-auth';
 import XboxLiveAPI from '@xboxreplay/xboxlive-api';
-import fs from 'fs';
-import path from 'path';
 import express from 'express';
 import bodyParser from 'body-parser';
 import session from 'express-session';
@@ -12,7 +10,7 @@ const port = 5000
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(session({
-  secret: 'XxSniperPro360xX', // A secret key to sign the session ID cookie
+  secret: 'XxSniperPro360xX',
   resave: false,
   saveUninitialized: true
 }));
@@ -41,11 +39,10 @@ app.post("/login",async (req,res) => {
 
      const user = { gamertag: gamertag, email:email, password:password };
   // Store the entire user object in the session
-  req.session.user = user;
 
     var auth = await authenticate(email,password);
-      
-  req.session.auth = auth;
+    req.session.user = user;
+    req.session.auth = auth;
   
   console.log(auth.user_hash)
 
@@ -60,17 +57,41 @@ app.post("/login",async (req,res) => {
     
 });
 
-app.get("/dashboard", (req, res) => {
+app.get("/dashboard" , async (req, res) => {
  
   const user = req.session.user;
 
   if (user) {
     // Render the EJS file with the data from the session
-  const auth = req.session.auth;;
+  const auth = req.session.auth;
+  const [settings, screenshotData, clipData] = await Promise.all([
+        XboxLiveAPI.getPlayerSettings(user.gamertag, { userHash: auth.user_hash, XSTSToken: auth.xsts_token }, ['UniqueModernGamertag', 'GameDisplayPicRaw', 'Gamerscore', 'Location']),
+        XboxLiveAPI.getPlayerScreenshots(user.gamertag, { userHash: auth.user_hash, XSTSToken: auth.xsts_token }),
+        XboxLiveAPI.getPlayerGameClips(user.gamertag, { userHash: auth.user_hash, XSTSToken: auth.xsts_token })
+      ]);
+  
+      // Process screenshots into a clean format for the template
+      const screenshots = screenshotData.screenshots.map(item => ({
+        type: 'image',
+        title: item.titleName,
+        date: item.dateTaken,
+        url: item.screenshotUris[0]?.uri // Get the first (usually highest quality) URI
+      })).filter(item => item.url); // Ensure we only include items with a valid URL
+  
+      // Process clips into a clean format
+      const clips = clipData.gameClips.map(item => ({
+        type: 'video',
+        title: item.titleName,
+        date: item.dateRecorded,
+        url: item.gameClipUris[0]?.uri,
+        thumbnail: item.thumbnails[0]?.uri 
+      })).filter(item => item.url);
 
-    res.render('dashboard', { user: user, auth: auth, playSettings: req.session.playSettings });
+ // Combine screenshots and clips, then sort by most recent
+    const mediaItems = [...screenshots, ...clips].sort((a, b) => new Date(b.date) - new Date(a.date));  
+
+    res.render('dashboard', { user: user, auth: auth, playSettings: req.session.playSettings, mediaItems });
   } else {
-    // Handle case where user isn't in session (e.g., redirect to login)
     res.redirect('/login');
   }
 
@@ -78,159 +99,5 @@ app.get("/dashboard", (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+console.log(`Server listening on http://localhost:${port}`);
 })
-
-var gamertag = 'Your_Gamertag'
-
-const downloadDirimg = './downloaded_images';
-const downloadDirclip = './downloaded_clips';
-
-const createDownloadDir = () => {
-  if (!fs.existsSync(downloadDirimg)) {
-    fs.mkdirSync(downloadDirimg);
-    console.log(`Created directory: ${downloadDirimg}`);
-  }
-   if (!fs.existsSync(downloadDirclip)) {
-    fs.mkdirSync(downloadDirclip);
-    console.log(`Created directory: ${downloadDirclip}`);
-  }
-};
-
-
-// var auth = await authenticate('YOUR_EMAIL', 'YOUR_PASSWORD');
-
-
-// console.log(auth.user_hash)
-
-// XboxLiveAPI.getPlayerSettings(gamertag, {
-//     userHash: auth.user_hash,
-//     XSTSToken: auth.xsts_token
-// }, ['UniqueModernGamertag', 'GameDisplayPicRaw', 'Gamerscore', 'Location'])
-//     .then(console.info)
-//     .catch(console.error);
-
-
-
-
-const downloadClips = async () => {
-  createDownloadDir();
-
-
-
-  const PlayerClips = await XboxLiveAPI.getPlayerGameClips(
-     gamertag,
-    {
-      userHash: auth.user_hash,
-    XSTSToken: auth.xsts_token
-    },
-);
-
-
-
-
-
-
-for (const [ClipIndex, clip] of PlayerClips.gameClips.entries()) {
-    const clipUris = clip.gameClipUris;
-
-    if (!clipUris || clipUris.length === 0) {
-      console.log(`Clip at index ${ClipIndex} has no URIs. Skipping.`);
-      continue;
-    }
-
-    
-    for (const [videoIndex, uriObject] of clipUris.entries()) {
-     
-      const uri = uriObject.uri;
-
-          const filename = `Clip_${ClipIndex + 1}_video_${videoIndex + 1}.mp4`;
-      const filepath = path.join(downloadDirclip, filename);
-
-      console.log(`Downloading ${uri} to ${filepath}...`);
-
-      try {
-      
-        const response = await fetch(uri);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch: ${response.statusText}`);
-        }
-
-       
-        const videoArrayBuffer = await response.arrayBuffer();
-        const videoBuffer = Buffer.from(videoArrayBuffer);
-        
-        await fs.promises.writeFile(filepath, videoBuffer);
-        console.log(`Successfully downloaded ${filename}`);
-
-      } catch (error) {
-        console.error(`Error downloading clip: ${error.message}`);
-      }
-    }
-  }
-}
-    
-
-const downloadImages = async () => {
-  createDownloadDir();
-
-
-
-const PlayerScreenshots = await XboxLiveAPI.getPlayerScreenshots(
-     gamertag,
-    {
-      userHash: auth.user_hash,
-    XSTSToken: auth.xsts_token
-    },
-);
-
-
-
-for (const [screenshotIndex, screenshot] of PlayerScreenshots.screenshots.entries()) {
-    const screenshotUris = screenshot.screenshotUris;
-
-    if (!screenshotUris || screenshotUris.length === 0) {
-      console.log(`Screenshot at index ${screenshotIndex} has no URIs. Skipping.`);
-      continue;
-    }
-
-    // Use a nested for...of loop to iterate over each URI within the screenshot
-    for (const [imageIndex, uriObject] of screenshotUris.entries()) {
-      // Extract the URI from the object
-      const uri = uriObject.uri;
-
-      // Generate a unique filename based on the screenshot and image index
-          const filename = `screenshot_${screenshotIndex + 1}_image_${imageIndex + 1}.png`;
-      const filepath = path.join(downloadDirimg, filename);
-
-      console.log(`Downloading ${uri} to ${filepath}...`);
-
-      try {
-        // Fetch the image data from the URI
-        const response = await fetch(uri);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch: ${response.statusText}`);
-        }
-
-        // Get the image data as an ArrayBuffer and convert it to a Node.js Buffer
-        const imageArrayBuffer = await response.arrayBuffer();
-        const imageBuffer = Buffer.from(imageArrayBuffer);
-        
-        // Write the buffer to the file using the modern fs.promises API
-        await fs.promises.writeFile(filepath, imageBuffer);
-        console.log(`Successfully downloaded ${filename}`);
-
-      } catch (error) {
-        console.error(`Error downloading image: ${error.message}`);
-      }
-    }
-  }
-
-  console.log('All downloads attempted.');
-};
-
-// Run the function
-// downloadImages();
-// downloadClips();
-
-

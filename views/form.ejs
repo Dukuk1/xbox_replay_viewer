@@ -1,131 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XBOX ScreenNClips</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
     <!-- Google Fonts - Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <!-- Custom Styles for the Gamer Theme -->
-    <style>
-        :root {
-            --xbox-green: #107C10;
-            --dark-bg: #1e1e1e;
-            --card-bg: #2d2d2d;
-            --light-text: #f8f9fa;
-            --gray-text: #adb5bd;
+    <!-- Custom Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'xbox-green': '#107C10',
+                        'dark-bg': '#1e1e1e',
+                        'card-bg': '#2d2d2d',
+                        'light-text': '#f8f9fa',
+                        'gray-text': '#adb5bd',
+                    },
+                    fontFamily: {
+                        'poppins': ['Poppins', 'sans-serif'],
+                    }
+                }
+            }
         }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--dark-bg);
-            color: var(--light-text);
-        }
-
-        .main-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .login-card {
-            background-color: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 0.75rem;
-            padding: 2.5rem;
-            max-width: 450px;
-            width: 100%;
-        }
-
-        .form-control {
-            background-color: #3d3d3d;
-            border: 1px solid #555;
-            color: var(--light-text);
-            border-radius: 0.5rem;
-        }
-        
-        .form-control:focus {
-            background-color: #4a4a4a;
-            border-color: var(--xbox-green);
-            box-shadow: 0 0 0 0.25rem rgba(16, 124, 16, 0.25);
-            color: var(--light-text);
-        }
-        
-        .form-control::placeholder {
-            color: var(--gray-text);
-        }
-        
-        .form-label {
-            color: var(--gray-text);
-        }
-        
-        .btn-submit {
-            background-color: var(--xbox-green);
-            border-color: var(--xbox-green);
-            color: var(--light-text);
-            font-weight: 600;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            transition: all 0.2s ease-in-out;
-        }
-
-        .btn-submit:hover {
-            background-color: #139613;
-            border-color: #139613;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(16, 124, 16, 0.3);
-        }
-        
-        .card-title {
-            font-weight: 700;
-            color: var(--light-text);
-        }
-        
-        .card-subtitle {
-            color: var(--gray-text);
-        }
-    </style>
+    </script>
 </head>
-<body>
 
-    <div class="container main-container">
-        <div class="login-card shadow-lg">
+<body class="bg-dark-bg text-light-text font-poppins flex flex-col min-h-screen">
+
+    <div class="flex items-center justify-center flex-grow p-4 sm:p-8">
+        <div class="w-full max-w-lg p-4 sm:p-8 sm:bg-card-bg sm:border sm:border-white/10 sm:rounded-xl sm:shadow-lg">
             <!-- Header Text -->
-            <div class="text-center mb-4">
-                <h1 class="card-title">ScreenShots n' Clips</h1>
-                <p class="card-subtitle">Sign in to your Xbox account to download your media.</p>
+            <div class="text-center mb-6">
+                <img src="/clipBox_logo.png" class="mx-auto h-20 w-20 mb-4">
+                <h1 class="text-3xl font-bold text-light-text">ClipBox</h1>
+                <br>
+                <p class="text-gray-text mt-2">Sign in to your Xbox account to download your media.</p>
             </div>
 
             <!-- Login Form -->
-            <form action="/login" method="post">
-                <div class="mb-3">
-                    <label for="gamertag" class="form-label">Gamertag</label>
-                    <input type="text" class="form-control" id="gamertag" name="gamertag" required placeholder="e.g., MasterChief117">
+            <form action="/login" method="post" class="space-y-5">
+                <div>
+                    <label for="gamertag" class="block text-sm font-medium text-gray-text">Gamertag</label>
+                    <input type="text" id="gamertag" name="gamertag" required placeholder="e.g., MasterChief117"
+                        class="mt-1 block w-full px-4 py-2 bg-[#3d3d3d] border border-[#555] rounded-md text-light-text placeholder-gray-text focus:outline-none focus:border-xbox-green focus:ring-1 focus:ring-xbox-green transition-colors">
                 </div>
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email address</label>
-                    <input type="email" class="form-control" id="email" name="email" required placeholder="you@example.com">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-text">Email address</label>
+                    <input type="email" id="email" name="email" required placeholder="you@example.com"
+                        class="mt-1 block w-full px-4 py-2 bg-[#3d3d3d] border border-[#555] rounded-md text-light-text placeholder-gray-text focus:outline-none focus:border-xbox-green focus:ring-1 focus:ring-xbox-green transition-colors">
                 </div>
-                <div class="mb-4">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" name="password" required placeholder="••••••••">
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-text">Password</label>
+                    <input type="password" id="password" name="password" required placeholder="••••••••"
+                        class="mt-1 block w-full px-4 py-2 bg-[#3d3d3d] border border-[#555] rounded-md text-light-text placeholder-gray-text focus:outline-none focus:border-xbox-green focus:ring-1 focus:ring-xbox-green transition-colors">
                 </div>
-                <div class="d-grid">
-                     <input type="submit" value="Sign In" class="btn btn-submit" />
+                <div>
+                    <button type="submit"
+                        class="w-full bg-xbox-green text-light-text font-semibold py-3 px-4 rounded-md shadow-lg transition-transform hover:scale-[1.01] hover:bg-[#139613] focus:outline-none focus:ring-2 focus:ring-xbox-green focus:ring-offset-2 focus:ring-offset-dark-bg">
+                        Sign In
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Footer -->
+    <footer class="text-center py-2 mb-4 text-gray-text text-sm sm:py-4">
+        <p>Created by <a href="https://github.com/Dukuk1"
+                class="text-xbox-green hover:underline transition-all duration-200">Hassan</a>
+            &amp;
+            <a href="https://github.com/the1coder-pro"
+                class="text-xbox-green hover:underline transition-all duration-200">Mhmd</a> &copy; 2025
+        </p>
+    </footer>
+
 </body>
+
 </html>

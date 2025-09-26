@@ -157,10 +157,16 @@
 
         <!-- Toolbar -->
         <div class="toolbar py-3 mb-4 d-flex justify-content-between align-items-center">
-            <button class="btn btn-xbox">
+            <button class="btn btn-xbox" id="download-all">
                 <i class="bi bi-download"></i>
                 Download All
             </button>
+            <script>
+                const downloadBtn = document.getElementById("download-all");
+                    downloadBtn.addEventListener("click", () => {
+                        window.location.href = '/download-all';
+                    });
+            </script>
             <button class="btn btn-xbox">
                 <i class="bi bi-filter"></i>
                 Filter

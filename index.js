@@ -47,7 +47,11 @@ app.post("/login",async (req,res) => {
     req.session.user = user;
     req.session.auth = auth;
   
-  console.log(auth.user_hash)
+  console.log(auth.user_hash);
+
+  gamertag = gamertag.replace('#', '')
+
+  
 
   const playSettings = await XboxLiveAPI.getPlayerSettings(gamertag, {
       userHash: auth.user_hash,
